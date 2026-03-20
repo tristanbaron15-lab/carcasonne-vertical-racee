@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carcassonne Vertical Race 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #1a1714;
+    --stone-mid: #2e2a25;
+    --stone-light: #4a4440;
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --cream: #f4ede0;
+    --red: #8b1a1a;
+    --white: #faf8f4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--stone);
+    color: var(--cream);
+    font-family: 'Cormorant Garamond', serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.15s ease;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.5rem 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(26,23,20,0.95), transparent);
+    backdrop-filter: blur(2px);
+  }
+  .nav-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--cream);
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.3s, color 0.3s;
+    text-transform: uppercase;
+  }
+  .nav-links a:hover { opacity: 1; color: var(--gold); }
+
+  .nav-cta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+  .nav-cta:hover { background: var(--gold); color: var(--stone); }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 60%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,26,26,0.12) 0%, transparent 50%),
+      linear-gradient(160deg, #0d0b09 0%, #1a1714 40%, #0f0d0b 100%);
+    z-index: 0;
+  }
+
+  /* Stone texture overlay */
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+  }
+
+  /* Animated rampart silhouette */
+  .rampart-svg {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    width: 100%;
+    opacity: 0.15;
+  }
+
+  /* Decorative lines */
+  .hero-line {
+    position: absolute;
+    top: 0; left: 50%;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+    opacity: 0.08;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 4rem 6rem;
+    max-width: 900px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    margin-bottom: 0.2em;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.4s forwards;
+  }
+  .hero-title span {
+    color: var(--gold);
+    display: block;
+    font-weight: 400;
+    font-size: 0.55em;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-subtitle {
+    font-size: 1.35rem;
+    font-style: italic;
+    font-weight: 300;
+    color: rgba(244,237,224,0.65);
+    margin: 1.5rem 0 2.5rem;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.6s forwards;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 3rem;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.8s forwards;
+  }
+  .hero-meta-item {
+    border-left: 1px solid var(--gold);
+    padding-left: 1rem;
+  }
+  .hero-meta-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.7;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .hero-meta-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    right: 4rem;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    opacity: 0.5;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    animation: fadeIn 1s ease 1.5s both;
+  }
+  .scroll-hint::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    margin-top: 0.5rem;
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0%, 100% { transform: scaleY(1); opacity: 0.5; }
+    50% { transform: scaleY(0.5); opacity: 1; }
+  }
+
+  /* SECTIONS */
+  section { padding: 7rem 4rem; }
+
+  .section-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0.8;
+  }
+  .section-eyebrow::before {
+    content: '';
+    display: block;
+    width: 30px; height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+
+  /* ABOUT SECTION */
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .about-text p {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: rgba(244,237,224,0.75);
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+  }
+  .about-text p strong {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+  .stat-box {
+    background: var(--stone-mid);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .stat-box:hover { background: #352f28; }
+  .stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 0;
+    background: var(--gold);
+    transition: height 0.4s ease;
+  }
+  .stat-box:hover::before { height: 100%; }
+  .stat-num {
+    font-family: 'Cinzel', serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(244,237,224,0.5);
+    text-transform: uppercase;
+  }
+
+  /* COURSE SECTION */
+  .course-section {
+    background: var(--stone-mid);
+    position: relative;
+    overflow: hidden;
+  }
+  .course-section::before {
+    content: 'PARCOURS';
+    position: absolute;
+    right: -2rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: 'Cinzel', serif;
+    font-size: 10rem;
+    font-weight: 900;
+    color: rgba(201,168,76,0.03);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 3rem;
+  }
+
+  .course-step {
+    padding: 2.5rem 2rem;
+    background: var(--stone);
+    position: relative;
+    transition: all 0.3s;
+  }
+  .course-step:hover { background: #221e1a; transform: translateY(-4px); }
+
+  .step-num {
+    font-family: 'Cinzel', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(201,168,76,0.12);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .step-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+  .step-desc {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(244,237,224,0.6);
+    font-weight: 300;
+  }
+
+  /* TICKETS SECTION */
+  .tickets-section {
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 3rem;
+  }
+
+  .ticket-card {
+    background: var(--stone-mid);
+    padding: 3rem 2.5rem;
+    position: relative;
+    transition: all 0.4s;
+    overflow: hidden;
+  }
+  .ticket-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+    transform-origin: left;
+  }
+  .ticket-card:hover::after { transform: scaleX(1); }
+  .ticket-card:hover { background: #2e2924; }
+
+  .ticket-card.featured {
+    background: linear-gradient(145deg, #2a2218, #1f1a12);
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+  .ticket-card.featured::before {
+    content: 'POPULAIRE';
+    position: absolute;
+    top: 1.5rem; right: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    background: var(--gold);
+    color: var(--stone);
+    padding: 0.3rem 0.7rem;
+    font-weight: 700;
+  }
+
+  .ticket-format {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+  .ticket-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+  .ticket-tagline {
+    font-size: 0.95rem;
+    font-style: italic;
+    color: rgba(244,237,224,0.5);
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+
+  .ticket-price {
+    margin: 2rem 0;
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+  .price-amount {
+    font-family: 'Cinzel', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .price-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(244,237,224,0.4);
+    letter-spacing: 0.1em;
+    margin-top: 0.3rem;
+  }
+
+  .ticket-perks {
+    list-style: none;
+    margin: 1.5rem 0 2rem;
+  }
+  .ticket-perks li {
+    font-size: 0.9rem;
+    color: rgba(244,237,224,0.65);
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-weight: 300;
+  }
+  .ticket-perks li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    opacity: 0.6;
+  }
+
+  .btn-register {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.3s;
+    text-align: center;
+  }
+  .btn-register:hover {
+    background: var(--gold);
+    color: var(--stone);
+  }
+  .ticket-card.featured .btn-register {
+    background: var(--gold);
+    color: var(--stone);
+  }
+  .ticket-card.featured .btn-register:hover {
+    background: var(--gold-light);
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,8,6,0.92);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.3s ease; }
+
+  .modal {
+    background: var(--stone-mid);
+    width: 90%;
+    max-width: 540px;
+    padding: 3.5rem;
+    position: relative;
+    border: 1px solid rgba(201,168,76,0.2);
+    animation: slideUp 0.4s ease;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1.5rem; right: 1.5rem;
+    background: none;
+    border: none;
+    color: rgba(244,237,224,0.4);
+    font-size: 1.5rem;
+    cursor: none;
+    transition: color 0.3s;
+  }
+  .modal-close:hover { color: var(--gold); }
+
+  .modal-header {
+    margin-bottom: 2rem;
+  }
+  .modal-ticket-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .modal-price {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin-top: 0.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  .form-group label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: rgba(244,237,224,0.5);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--stone);
+    border: 1px solid rgba(201,168,76,0.15);
+    color: var(--cream);
+    padding: 0.8rem 1rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    cursor: none;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--gold);
+  }
+  .form-group select option { background: var(--stone-mid); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .btn-submit {
+    width: 100%;
+    padding: 1rem;
+    background: var(--gold);
+    border: none;
+    color: var(--stone);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: none;
+    margin-top: 1.5rem;
+    transition: background 0.3s;
+    font-weight: 700;
+  }
+  .btn-submit:hover { background: var(--gold-light); }
+
+  /* SUCCESS STATE */
+  .success-msg {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+  }
+  .success-msg.show { display: block; animation: fadeIn 0.5s ease; }
+  .success-icon {
+    font-size: 3rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .success-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+  }
+  .success-text {
+    font-size: 1rem;
+    color: rgba(244,237,224,0.6);
+    font-style: italic;
+    font-weight: 300;
+  }
+  .success-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+    margin-top: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* SAFETY SECTION */
+  .safety-section {
+    background: var(--stone-mid);
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 6rem;
+    align-items: center;
+  }
+
+  .safety-list {
+    list-style: none;
+    margin-top: 2rem;
+  }
+  .safety-list li {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    font-size: 1rem;
+    color: rgba(244,237,224,0.75);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  .safety-list li .icon {
+    color: var(--gold);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .safety-highlight {
+    background: var(--stone);
+    padding: 3rem;
+    border-left: 3px solid var(--gold);
+  }
+  .safety-highlight blockquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    font-weight: 300;
+    color: var(--cream);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .safety-highlight cite {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    opacity: 0.7;
+    font-style: normal;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(201,168,76,0.15);
+    padding: 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .footer-brand {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .footer-tagline {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: rgba(244,237,224,0.4);
+    font-weight: 300;
+  }
+
+  .footer-col h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    opacity: 0.7;
+  }
+  .footer-col p, .footer-col a {
+    font-size: 0.95rem;
+    color: rgba(244,237,224,0.5);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+    transition: color 0.3s;
+  }
+  .footer-col a:hover { color: var(--gold); }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(201,168,76,0.08);
+    padding: 1.5rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-bottom span {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(244,237,224,0.25);
+    text-transform: uppercase;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(25px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Count badge */
+  .spots-left {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">CVR · 2026</div>
+  <ul class="nav-links">
+    <li><a href="#course">Le Parcours</a></li>
+    <li><a href="#tickets">Inscriptions</a></li>
+    <li><a href="#safety">Sécurité</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#tickets" class="nav-cta">S'inscrire</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-line"></div>
+
+  <svg class="rampart-svg" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0,200 L0,120 L40,120 L40,80 L80,80 L80,120 L120,120 L120,60 L160,60 L160,120 L200,120 L200,80 L240,80 L240,120 L280,120 L280,100 L320,100 L320,120 L360,120 L360,70 L400,70 L400,120 L440,120 L440,85 L480,85 L480,120 L520,120 L520,90 L560,90 L560,60 L600,60 L600,90 L640,90 L640,120 L680,120 L680,75 L720,75 L720,120 L760,120 L760,85 L800,85 L800,120 L840,120 L840,65 L880,65 L880,120 L920,120 L920,90 L960,90 L960,120 L1000,120 L1000,80 L1040,80 L1040,120 L1080,120 L1080,70 L1120,70 L1120,120 L1160,120 L1160,85 L1200,85 L1200,120 L1240,120 L1240,95 L1280,95 L1280,120 L1320,120 L1320,75 L1360,75 L1360,120 L1400,120 L1400,100 L1440,100 L1440,200 Z" fill="url(#rampartGrad)"/>
+    <defs>
+      <linearGradient id="rampartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c9a84c"/>
+        <stop offset="100%" stop-color="#c9a84c" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">UNESCO · Patrimoine Mondial · Carcassonne</div>
+    <h1 class="hero-title">
+      Carcassonne
+      <span>Vertical Race</span>
+    </h1>
+    <p class="hero-subtitle">Where History Meets Performance — Là où les remparts deviennent un terrain de jeu.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Date</span>
+        <span class="hero-meta-value">4 Avril 2026</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Lieu</span>
+        <span class="hero-meta-value">Cité Médiévale</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Participants</span>
+        <span class="hero-meta-value">300 max</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Formats</span>
+        <span class="hero-meta-value">3 courses</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">Défiler</div>
+</section>
+
+<!-- ABOUT -->
+<section style="padding: 7rem 4rem;">
+  <div class="about reveal">
+    <div class="about-text">
+      <div class="section-eyebrow">À Propos</div>
+      <h2 class="section-title">Un défi unique<br>dans un cadre légendaire</h2>
+      <p>La Carcassonne Vertical Race est un événement <strong>hybride inédit</strong>, combinant trail urbain et via ferrata au cœur de la Cité Médiévale de Carcassonne — site classé au <strong>Patrimoine Mondial de l'UNESCO</strong>.</p>
+      <p>Les athlètes devront défier les remparts eux-mêmes : courir, grimper, et naviguer dans ce cadre extraordinaire. Un événement conçu pour être <strong>exaltant et responsable</strong>, respectueux du patrimoine et ouvert à tous les niveaux.</p>
+    </div>
+    <div class="about-stats">
+      <div class="stat-box">
+        <div class="stat-num">300</div>
+        <div class="stat-label">Participants max</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Formats de course</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">10</div>
+        <div class="stat-label">Guides certifiés</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">2500</div>
+        <div class="stat-label">Ans d'histoire</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSE -->
+<section class="course-section" id="course">
+  <div class="section-eyebrow reveal">Le Parcours</div>
+  <h2 class="section-title reveal">Du départ à l'arrivée,<br>chaque mètre raconte une histoire</h2>
+  <p class="reveal" style="font-size:1.1rem; color:rgba(244,237,224,0.6); font-weight:300; font-style:italic; margin-top:0.5rem;">Départ et arrivée : Porte Narbonnaise</p>
+
+  <div class="course-grid">
+    <div class="course-step reveal">
+      <div class="step-num">01</div>
+      <div class="step-title">Via Ferrata</div>
+      <div class="step-desc">Une section technique qui mène directement sur les remparts médiévaux. Concentration, coordination et courage requis.</div>
+    </div>
+    <div class="course-step reveal">
+      <div class="step-num">02</div>
+      <div class="step-title">Les Remparts</div>
+      <div class="step-desc">Course sur les chemins de ronde, passage à travers les tours de guet historiques. Sport et patrimoine fusionnent.</div>
+    </div>
+    <div class="course-step reveal">
+      <div class="step-num">03</div>
+      <div class="step-title">Rues Pavées</div>
+      <div class="step-desc">Navigation dans les ruelles étroites de la Cité, entre pierres centenaires et atmosphère médiévale unique.</div>
+    </div>
+    <div class="course-step reveal">
+      <div class="step-num">04</div>
+      <div class="step-title">Les Tours</div>
+      <div class="step-desc">Passage à travers les tours de guet historiques offrant des panoramas spectaculaires sur la plaine environnante.</div>
+    </div>
+    <div class="course-step reveal">
+      <div class="step-num">05</div>
+      <div class="step-title">Finish Vertical</div>
+      <div class="step-desc">La montée finale à la Porte Narbonnaise — un finish vertical mémorable sous les acclamations du public.</div>
+    </div>
+    <div class="course-step reveal" style="background:var(--stone-mid); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:0.5rem; padding:2rem;">
+      <div style="font-family:'DM Mono', monospace; font-size:0.65rem; letter-spacing:0.2em; color:var(--gold); opacity:0.7; text-transform:uppercase;">Dénivelé estimé</div>
+      <div style="font-family:'Cinzel', serif; font-size:3.5rem; font-weight:900; color:var(--gold);">+180m</div>
+      <div style="font-family:'DM Mono', monospace; font-size:0.6rem; color:rgba(244,237,224,0.4); letter-spacing:0.1em;">Distance totale ~4.2 km</div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKETS -->
+<section class="tickets-section" id="tickets">
+  <div class="section-eyebrow reveal">Inscriptions</div>
+  <h2 class="section-title reveal">Choisissez votre défi</h2>
+  <p class="reveal" style="font-size:1.1rem; color:rgba(244,237,224,0.55); font-weight:300; font-style:italic; margin-top:0.5rem;">Places limitées à 300 participants — Édition inaugurale</p>
+
+  <div class="tickets-grid">
+
+    <!-- DISCOVERY -->
+    <div class="ticket-card reveal">
+      <div class="ticket-format">Format découverte</div>
+      <div class="ticket-name">Discovery Route</div>
+      <div class="ticket-tagline">L'expérience avant la performance</div>
+      <span class="spots-left">⚠ Plus que 28 places</span>
+      <div class="ticket-price">
+        <div class="price-amount">€30</div>
+        <div class="price-unit">par personne</div>
+      </div>
+      <ul class="ticket-perks">
+        <li>Parcours complet non-chronométré</li>
+        <li>Vue panoramique sur la plaine</li>
+        <li>Dossard officiel + médaille finisher</li>
+        <li>Accès village food trucks</li>
+        <li>Guide accompagnateur inclus</li>
+      </ul>
+      <button class="btn-register" onclick="openModal('Discovery Route', '€30 / personne')">Réserver ma place</button>
+    </div>
+
+    <!-- TEAM -->
+    <div class="ticket-card featured reveal">
+      <div class="ticket-format">Format duo</div>
+      <div class="ticket-name">Team Race</div>
+      <div class="ticket-tagline">Deux athlètes, un même défi</div>
+      <span class="spots-left">⚠ Plus que 14 équipes</span>
+      <div class="ticket-price">
+        <div class="price-amount">€40</div>
+        <div class="price-unit">par personne · équipes de 2</div>
+      </div>
+      <ul class="ticket-perks">
+        <li>Course chronométrée en binôme</li>
+        <li>Classement équipes officiel</li>
+        <li>Dossards + médailles finisher</li>
+        <li>Accès zone VIP après course</li>
+        <li>Pack photo souvenir inclus</li>
+        <li>Accès village food trucks</li>
+      </ul>
+      <button class="btn-register" onclick="openModal('Team Race', '€40 / personne (équipe de 2)')">Réserver ma place</button>
+    </div>
+
+    <!-- SOLO ELITE -->
+    <div class="ticket-card reveal">
+      <div class="ticket-format">Format élite</div>
+      <div class="ticket-name">Solo Chrono</div>
+      <div class="ticket-tagline">Pour les athlètes de haut niveau</div>
+      <span class="spots-left">⚠ Plus que 41 places</span>
+      <div class="ticket-price">
+        <div class="price-amount">€55</div>
+        <div class="price-unit">par personne</div>
+      </div>
+      <ul class="ticket-perks">
+        <li>Course chronométrée individuelle</li>
+        <li>Classement général officiel</li>
+        <li>Dossard + trophée top 10</li>
+        <li>Briefing technique avec guides</li>
+        <li>Accès zone VIP après course</li>
+        <li>Pack photo souvenir inclus</li>
+      </ul>
+      <button class="btn-register" onclick="openModal('Solo Chrono', '€55 / personne')">Réserver ma place</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- SAFETY -->
+<section class="safety-section" id="safety">
+  <div>
+    <div class="section-eyebrow reveal">Sécurité</div>
+    <h2 class="section-title reveal">La sécurité,<br>notre priorité absolue</h2>
+    <ul class="safety-list reveal">
+      <li><span class="icon">⛓</span> Lignes de vie temporaires installées sur les remparts</li>
+      <li><span class="icon">🧗</span> 10 guides de montagne certifiés sur tout le parcours</li>
+      <li><span class="icon">🏥</span> Postes de secours avancés tous les 500 mètres</li>
+      <li><span class="icon">🚑</span> Unité médicale mobile à la Porte Narbonnaise</li>
+      <li><span class="icon">👥</span> Zones spectateurs sécurisées et balisées</li>
+      <li><span class="icon">🚌</span> Navettes gratuites centre-ville ↔ Cité</li>
+      <li><span class="icon">🌿</span> Système Zero Trace — impact environnemental minimal</li>
+    </ul>
+  </div>
+  <div class="reveal">
+    <div class="safety-highlight">
+      <blockquote>"Carcassonne a résisté pendant 2 500 ans. La Carcassonne Vertical Race lui offre une nouvelle légende — écrite par des athlètes."</blockquote>
+      <cite>— L'équipe organisatrice CVR 2026</cite>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div>
+    <div class="footer-brand">CVR 2026</div>
+    <div class="footer-tagline">Where History Meets Performance</div>
+  </div>
+  <div class="footer-col">
+    <h4>Informations</h4>
+    <p>4 Avril 2026</p>
+    <p>Porte Narbonnaise, Carcassonne</p>
+    <p>11000 Aude, Occitanie</p>
+    <a href="#">Programme détaillé →</a>
+    <a href="#">Règlement de course →</a>
+  </div>
+  <div class="footer-col">
+    <h4>Contact</h4>
+    <a href="#">contact@carcassonne-verticalrace.fr</a>
+    <a href="#">Partenariats & Sponsors</a>
+    <a href="#">Presse & Médias</a>
+    <a href="#">Bénévolat</a>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span>© 2026 Carcassonne Vertical Race — Tous droits réservés</span>
+  <span>Site non officiel — Projet étudiant</span>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div id="formContent">
+      <div class="modal-header">
+        <div class="modal-ticket-type" id="modalType">Format</div>
+        <div class="modal-title" id="modalTitle">Nom de la course</div>
+        <div class="modal-price" id="modalPrice">€00</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" placeholder="Jean">
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" placeholder="Dupont">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Adresse e-mail</label>
+        <input type="email" placeholder="jean.dupont@email.com">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date de naissance</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>Nationalité</label>
+          <select>
+            <option>France</option>
+            <option>Espagne</option>
+            <option>Italie</option>
+            <option>Allemagne</option>
+            <option>Royaume-Uni</option>
+            <option>Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Niveau sportif</label>
+        <select>
+          <option>Débutant — Je découvre la course nature</option>
+          <option>Intermédiaire — Quelques courses à mon actif</option>
+          <option>Confirmé — Trail et via ferrata réguliers</option>
+          <option>Élite — Compétiteur de haut niveau</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>J'ai lu et j'accepte le règlement de course</label>
+        <select>
+          <option>Oui, j'accepte les conditions</option>
+          <option>Non (inscription impossible)</option>
+        </select>
+      </div>
+
+      <button class="btn-submit" onclick="submitForm()">Confirmer mon inscription →</button>
+    </div>
+
+    <div class="success-msg" id="successMsg">
+      <div class="success-icon">✦</div>
+      <div class="success-title">Inscription confirmée !</div>
+      <div class="success-text">Votre place est réservée pour la Carcassonne Vertical Race 2026. Un email de confirmation vous a été envoyé.</div>
+      <div class="success-ref" id="successRef">Référence : CVR-2026-####</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursorRing');
+  let mouseX = 0, mouseY = 0;
+  let ringX = 0, ringY = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    cursor.style.left = mouseX - 5 + 'px';
+    cursor.style.top = mouseY - 5 + 'px';
+  });
+
+  function animateCursor() {
+    ringX += (mouseX - ringX - 18) * 0.12;
+    ringY += (mouseY - ringY - 18) * 0.12;
+    cursorRing.style.left = ringX + 'px';
+    cursorRing.style.top = ringY + 'px';
+    requestAnimationFrame(animateCursor);
+  }
+  animateCursor();
+
+  document.querySelectorAll('button, a').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'scale(2)';
+      cursorRing.style.transform = 'scale(1.5)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'scale(1)';
+      cursorRing.style.transform = 'scale(1)';
+    });
+  });
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Modal
+  function openModal(name, price) {
+    document.getElementById('modalType').textContent = 'Inscription — ' + name;
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalPrice').textContent = price;
+    document.getElementById('formContent').style.display = 'block';
+    document.getElementById('successMsg').classList.remove('show');
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function closeModalOnOverlay(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function submitForm() {
+    const ref = 'CVR-2026-' + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('successRef').textContent = 'Référence : ' + ref;
+    document.getElementById('formContent').style.display = 'none';
+    document.getElementById('successMsg').classList.add('show');
+  }
+</script>
+</body>
+</html>
